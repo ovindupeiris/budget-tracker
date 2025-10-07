@@ -1,0 +1,23 @@
+package com.budgettracker.entity.enums;
+
+/**
+ * Notification types
+ */
+public enum NotificationType {
+    BUDGET_ALERT,
+    BUDGET_EXCEEDED,
+    BILL_REMINDER,
+    SUBSCRIPTION_REMINDER,
+    TRANSACTION_CREATED,
+    TRANSACTION_UPDATED,
+    GOAL_ACHIEVED,
+    GOAL_MILESTONE,
+    WALLET_SHARED,
+    PAYMENT_DUE,
+    LOW_BALANCE,
+    RECURRING_TRANSACTION,
+    BANK_SYNC_FAILED,
+    SECURITY_ALERT,
+    SYSTEM_ANNOUNCEMENT,
+    FEATURE_UPDATE
+}

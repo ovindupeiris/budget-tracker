@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(docker compose:*)",
+      "Bash(sudo systemctl status:*)",
+      "Bash(pg_isready:*)",
+      "Bash(psql:*)",
+      "Bash(java:*)",
+      "Bash(sudo apt-get:*)",
+      "Bash(sudo apt-get install:*)",
+      "Bash(chmod:*)",
+      "Bash(cat:*)",
+      "Bash(docker:*)",
+      "Bash(bash:*)",
+      "Bash(sudo docker:*)",
+      "Bash(sudo docker compose:*)",
+      "Bash(docker-compose:*)",
+      "Bash(/tmp/docker-compose:*)",
+      "Read(//etc/apt/sources.list.d/**)",
+      "Read(//etc/apt/**)",
+      "Bash(sudo bash:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

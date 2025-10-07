@@ -1,0 +1,54 @@
+# Production Environment Configuration
+
+spring:
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        generate_statistics: false
+
+  devtools:
+    restart:
+      enabled: false
+    livereload:
+      enabled: false
+
+logging:
+  level:
+    root: WARN
+    com.budgettracker: INFO
+    org.springframework.web: WARN
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+    org.springframework.kafka: INFO
+  file:
+    name: /var/log/budget-tracker/application.log
+    max-size: 100MB
+    max-history: 60
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+
+server:
+  error:
+    include-stacktrace: never
+    include-exception: false
+  shutdown: graceful
+  tomcat:
+    threads:
+      max: 500
+      min-spare: 50
+    max-connections: 20000
+
+app:
+  security:
+    rate-limit:
+      enabled: true
+      requests-per-minute: 100

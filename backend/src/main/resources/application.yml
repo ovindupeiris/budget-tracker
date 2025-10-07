@@ -1,0 +1,326 @@
+spring:
+  application:
+    name: budget-tracker-api
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+  # Database Configuration
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:budget_tracker}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:20}
+      minimum-idle: ${DB_POOL_MIN_IDLE:5}
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      pool-name: BudgetTrackerHikariPool
+
+  # JPA Configuration
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: validate
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+        query:
+          in_clause_parameter_padding: true
+        connection:
+          provider_disables_autocommit: true
+        generate_statistics: false
+
+  # Flyway Migration
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+    validate-on-migrate: true
+    out-of-order: false
+
+  # Redis Configuration
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DB:0}
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 2
+          max-wait: -1ms
+      timeout: 3000ms
+
+  # Cache Configuration
+  cache:
+    type: redis
+    redis:
+      time-to-live: 600000
+      cache-null-values: false
+      use-key-prefix: true
+      key-prefix: "budget-tracker:"
+
+  # Kafka Configuration
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      retries: 3
+      properties:
+        enable.idempotence: true
+        max.in.flight.requests.per.connection: 5
+        compression.type: snappy
+    consumer:
+      group-id: budget-tracker-consumer-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      properties:
+        spring.json.trusted.packages: "com.budgettracker.*"
+        isolation.level: read_committed
+    listener:
+      ack-mode: manual
+      concurrency: 3
+
+  # Security Configuration
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${JWT_ISSUER_URI:http://localhost:8080}
+          jwk-set-uri: ${JWT_JWK_SET_URI:http://localhost:8080/.well-known/jwks.json}
+
+  # Servlet/Multipart
+  servlet:
+    multipart:
+      max-file-size: ${MAX_FILE_SIZE:10MB}
+      max-request-size: ${MAX_REQUEST_SIZE:10MB}
+      enabled: true
+
+  # Mail Configuration
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
+  # Jackson Configuration
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+      indent-output: false
+    deserialization:
+      fail-on-unknown-properties: false
+    default-property-inclusion: non_null
+    time-zone: UTC
+
+# Server Configuration
+server:
+  port: ${SERVER_PORT:8080}
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
+  error:
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: on_param
+    include-exception: false
+  shutdown: graceful
+  tomcat:
+    threads:
+      max: 200
+      min-spare: 10
+    connection-timeout: 20000
+    max-connections: 10000
+    accept-count: 100
+
+# Management/Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,loggers,env,configprops
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true
+    metrics:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+    tags:
+      application: ${spring.application.name}
+      environment: ${spring.profiles.active}
+  tracing:
+    sampling:
+      probability: 1.0
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    com.budgettracker: DEBUG
+    org.springframework.web: INFO
+    org.springframework.security: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.springframework.kafka: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/budget-tracker.log
+    max-size: 10MB
+    max-history: 30
+
+# Springdoc/OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    tags-sorter: alpha
+    operations-sorter: alpha
+    display-request-duration: true
+    doc-expansion: none
+  show-actuator: true
+
+# Application-Specific Configuration
+app:
+  # JWT Configuration
+  jwt:
+    secret: ${JWT_SECRET:your-256-bit-secret-key-change-this-in-production}
+    expiration: ${JWT_EXPIRATION:86400000} # 24 hours in milliseconds
+    refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000} # 7 days
+    issuer: ${JWT_ISSUER:budget-tracker}
+
+  # CORS Configuration
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:3001}
+    allowed-methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
+    allowed-headers: "*"
+    exposed-headers: Authorization,Link,X-Total-Count
+    allow-credentials: true
+    max-age: 3600
+
+  # S3/Object Storage Configuration
+  storage:
+    type: ${STORAGE_TYPE:s3} # s3, minio, local
+    endpoint: ${S3_ENDPOINT:https://s3.amazonaws.com}
+    region: ${S3_REGION:us-east-1}
+    access-key: ${S3_ACCESS_KEY:}
+    secret-key: ${S3_SECRET_KEY:}
+    bucket-name: ${S3_BUCKET_NAME:budget-tracker-attachments}
+    url-expiration: 3600 # Pre-signed URL expiration in seconds
+
+  # Stripe Configuration
+  stripe:
+    api-key: ${STRIPE_API_KEY:}
+    webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+
+  # FX Rates Configuration
+  fx:
+    provider: ${FX_PROVIDER:exchangerate-api} # exchangerate-api, fixer, ecb
+    api-key: ${FX_API_KEY:}
+    base-url: ${FX_BASE_URL:https://api.exchangerate-api.com/v4/latest/}
+    cache-ttl: 3600 # Cache TTL in seconds
+
+  # OCR Configuration
+  ocr:
+    enabled: ${OCR_ENABLED:true}
+    engine: ${OCR_ENGINE:tesseract} # tesseract, google-vision, aws-textract
+    tesseract-data-path: ${TESSERACT_DATA_PATH:/usr/share/tesseract-ocr/4.00/tessdata}
+
+  # ML/AI Configuration
+  ml:
+    categorization:
+      enabled: ${ML_CATEGORIZATION_ENABLED:true}
+      model-path: ${ML_MODEL_PATH:models/categorization}
+      confidence-threshold: 0.75
+
+  # Security Configuration
+  security:
+    encryption:
+      algorithm: AES/GCM/NoPadding
+      key-size: 256
+    password:
+      encoder: bcrypt
+      strength: 10
+    rate-limit:
+      enabled: true
+      requests-per-minute: 100
+
+  # Feature Flags
+  features:
+    bank-integration: ${FEATURE_BANK_INTEGRATION:true}
+    ocr-receipts: ${FEATURE_OCR_RECEIPTS:true}
+    ml-categorization: ${FEATURE_ML_CATEGORIZATION:true}
+    investments: ${FEATURE_INVESTMENTS:true}
+    shared-wallets: ${FEATURE_SHARED_WALLETS:true}
+    subscriptions: ${FEATURE_SUBSCRIPTIONS:true}
+
+  # Async/Threading Configuration
+  async:
+    core-pool-size: 5
+    max-pool-size: 10
+    queue-capacity: 100
+    thread-name-prefix: budget-tracker-async-
+
+  # Pagination
+  pagination:
+    default-page-size: 20
+    max-page-size: 100
+
+  # Audit Configuration
+  audit:
+    enabled: true
+    retention-days: 365
+
+  # Offline Sync Configuration
+  sync:
+    conflict-resolution: last-write-wins # last-write-wins, server-wins, client-wins
+    max-offline-duration-days: 30
+
+  # Notification Configuration
+  notification:
+    channels:
+      email: true
+      push: false
+      sms: false
+    templates-path: classpath:templates/notifications/
