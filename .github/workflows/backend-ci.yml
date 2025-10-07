@@ -92,7 +92,7 @@ jobs:
       run: mvn clean package -DskipTests
 
     - name: Upload artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: budget-tracker-backend
         path: backend/target/*.jar
