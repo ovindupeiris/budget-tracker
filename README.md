@@ -35,24 +35,96 @@
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Ubuntu 20.04+ or similar Linux
+- Docker & Docker Compose
 - 4GB RAM minimum
-- 20GB free disk space
-- sudo access
+- 10GB free disk space
+- Java 17+ (for local development mode)
+- Maven 3.8+ (for local development mode)
 
-### One-Command Installation
+### 🎯 Easy Deployment (One Command)
 
 ```bash
 git clone https://github.com/yourusername/budget-tracker.git
 cd budget-tracker
-sudo bash deploy.sh
+./deploy.sh
 ```
 
-That's it! The application will be running at:
-- **Backend API**: http://localhost:8080
-- **Swagger Docs**: http://localhost:8080/swagger-ui.html
+The interactive menu will guide you through:
+1. **Local Development** - Infrastructure in Docker, backend with Maven (hot reload)
+2. **Local Docker** - Full stack in Docker containers
+3. **Production** - Production-optimized deployment
 
-### Quick API Test
+### 📋 Deployment Modes
+
+#### 1. Local Development (Recommended for Development)
+```bash
+./deploy.sh
+# Select option 1
+```
+- Infrastructure runs in Docker (PostgreSQL, Redis, Kafka, MinIO)
+- Spring Boot runs locally with Maven for hot reload
+- Best for: Active development
+
+#### 2. Local Docker (Full Stack)
+```bash
+./deploy.sh
+# Select option 2
+```
+- Everything runs in Docker containers
+- Best for: Testing complete system, demos
+
+#### 3. Production Deployment
+```bash
+./deploy.sh
+# Select option 3
+```
+- Production-optimized configuration
+- Resource limits and health checks
+- Security hardening
+- Best for: Production environments
+
+### 🔧 Quick Commands
+
+```bash
+# Start development server
+./deploy.sh  # Choose option 1
+
+# View logs
+./deploy.sh  # Choose option 5
+
+# Health check all services
+./deploy.sh  # Choose option 4
+
+# Database backup
+./deploy.sh  # Choose option 6
+
+# Stop all services
+docker-compose down
+
+# Clean up everything
+./deploy.sh  # Choose option 9
+```
+
+### 🌐 Access URLs
+
+After deployment, access your services:
+
+**Local Development:**
+- API: http://localhost:8080
+- Swagger UI: http://localhost:8080/swagger-ui.html
+- Actuator Health: http://localhost:8080/actuator/health
+
+**Infrastructure:**
+- MinIO Console: http://localhost:9001 (minioadmin/minioadmin)
+- pgAdmin: http://localhost:5050 (admin@budgettracker.com/admin)
+- Grafana: http://localhost:3000 (admin/admin)
+- Prometheus: http://localhost:9090
+
+**GitHub Codespaces:**
+- Check the 'PORTS' tab in VS Code for forwarded URLs
+- All ports are automatically forwarded
+
+### 🧪 Quick API Test
 
 ```bash
 # Register a user

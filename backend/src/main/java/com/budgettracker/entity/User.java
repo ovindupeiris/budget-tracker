@@ -160,7 +160,7 @@ public class User extends BaseEntity {
         return status == UserStatus.ACTIVE &&
                emailVerified &&
                !isAccountLocked() &&
-               !deleted;
+               !getDeleted();
     }
 
     /**

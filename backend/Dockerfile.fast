@@ -1,0 +1,40 @@
+# Fast build Dockerfile for development
+FROM maven:3.9-eclipse-temurin-17-alpine AS build
+
+WORKDIR /app
+
+# Copy everything
+COPY . .
+
+# Build with parallel downloads and skip tests
+RUN mvn clean package -DskipTests -B -T 1C --no-transfer-progress
+
+# Runtime stage
+FROM eclipse-temurin:17-jre-alpine
+
+# Install tesseract for OCR
+RUN apk add --no-cache tesseract-ocr tesseract-ocr-data-eng curl
+
+# Create app user
+RUN addgroup -g 1001 -S appuser && adduser -u 1001 -S appuser -G appuser
+
+WORKDIR /app
+
+# Copy JAR
+COPY --from=build /app/target/*.jar app.jar
+
+# Create logs directory
+RUN mkdir -p /app/logs && chown -R appuser:appuser /app
+
+USER appuser
+
+EXPOSE 8080
+
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8080/actuator/health || exit 1
+
+# JVM Options for development
+ENV JAVA_OPTS="-Xms256m -Xmx1024m"
+
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

@@ -20,7 +20,14 @@
       "Bash(/tmp/docker-compose:*)",
       "Read(//etc/apt/sources.list.d/**)",
       "Read(//etc/apt/**)",
-      "Bash(sudo bash:*)"
+      "Bash(sudo bash:*)",
+      "Bash(mvn:*)",
+      "Read(//usr/lib/**)",
+      "Bash(sudo update-alternatives:*)",
+      "Bash(export:*)",
+      "Bash(export PATH=$JAVA_HOME/bin:$PATH)",
+      "Bash(lsof -ti :8080,8081,8082)",
+      "Bash(xargs -r kill -9)"
     ],
     "deny": [],
     "ask": []

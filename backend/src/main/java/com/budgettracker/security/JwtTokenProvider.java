@@ -49,15 +49,15 @@ public class JwtTokenProvider {
         Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
 
         return Jwts.builder()
-                .setSubject(userPrincipal.getId().toString())
+                .subject(userPrincipal.getId().toString())
                 .claim("email", userPrincipal.getEmail())
                 .claim("roles", userPrincipal.getAuthorities().stream()
                         .map(GrantedAuthority::getAuthority)
                         .collect(Collectors.toList()))
-                .setIssuedAt(now)
-                .setExpiration(expiryDate)
-                .setIssuer(issuer)
-                .signWith(key, SignatureAlgorithm.HS512)
+                .issuedAt(now)
+                .expiration(expiryDate)
+                .issuer(issuer)
+                .signWith(key)
                 .compact();
     }
 
@@ -70,12 +70,12 @@ public class JwtTokenProvider {
         Date expiryDate = new Date(now.getTime() + jwtRefreshExpirationMs);
 
         return Jwts.builder()
-                .setSubject(userPrincipal.getId().toString())
-                .setIssuedAt(now)
-                .setExpiration(expiryDate)
-                .setIssuer(issuer)
+                .subject(userPrincipal.getId().toString())
+                .issuedAt(now)
+                .expiration(expiryDate)
+                .issuer(issuer)
                 .claim("type", "refresh")
-                .signWith(key, SignatureAlgorithm.HS512)
+                .signWith(key)
                 .compact();
     }
 
@@ -83,11 +83,11 @@ public class JwtTokenProvider {
      * Get user ID from JWT token
      */
     public String getUserIdFromToken(String token) {
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(key)
+        Claims claims = Jwts.parser()
+                .verifyWith(key)
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
+                .parseSignedClaims(token)
+                .getPayload();
 
         return claims.getSubject();
     }
@@ -97,10 +97,10 @@ public class JwtTokenProvider {
      */
     public boolean validateToken(String authToken) {
         try {
-            Jwts.parserBuilder()
-                    .setSigningKey(key)
+            Jwts.parser()
+                    .verifyWith(key)
                     .build()
-                    .parseClaimsJws(authToken);
+                    .parseSignedClaims(authToken);
             return true;
         } catch (SecurityException ex) {
             log.error("Invalid JWT signature");

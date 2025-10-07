@@ -1,559 +1,761 @@
-# Budget Tracker - Deployment Guide
+# 🚀 Budget Tracker - Deployment Guide
+
+Complete guide for deploying Budget Tracker in various environments.
 
 ## Table of Contents
-1. [Prerequisites](#prerequisites)
-2. [Local Development](#local-development)
-3. [Docker Deployment](#docker-deployment)
-4. [Kubernetes Deployment](#kubernetes-deployment)
-5. [AWS Deployment with Terraform](#aws-deployment)
-6. [Environment Variables](#environment-variables)
-7. [Database Migrations](#database-migrations)
-8. [Monitoring Setup](#monitoring-setup)
-9. [Backup and Recovery](#backup-and-recovery)
-10. [Troubleshooting](#troubleshooting)
+
+- [Overview](#overview)
+- [Prerequisites](#prerequisites)
+- [Quick Start](#quick-start)
+- [Deployment Modes](#deployment-modes)
+- [Production Deployment](#production-deployment)
+- [GitHub Codespaces](#github-codespaces)
+- [Environment Configuration](#environment-configuration)
+- [Database Management](#database-management)
+- [Monitoring & Logs](#monitoring--logs)
+- [Troubleshooting](#troubleshooting)
+- [Security Best Practices](#security-best-practices)
+
+---
+
+## Overview
+
+Budget Tracker provides a unified deployment tool (`deploy.sh`) that supports multiple deployment scenarios:
+
+- **Local Development**: Infrastructure in Docker, Spring Boot with Maven (hot reload)
+- **Local Docker**: Full stack in Docker containers
+- **Production**: Production-optimized deployment with security hardening
 
 ---
 
 ## Prerequisites
 
-### Required Software
-- Docker 24+ and Docker Compose
-- Kubernetes 1.28+ (for K8s deployment)
-- kubectl (for K8s deployment)
-- Terraform 1.0+ (for AWS deployment)
-- AWS CLI (for AWS deployment)
-- Java 17+ (for local development)
-- Maven 3.9+ (for local development)
+### Required
+- **Docker** 20.10+ and **Docker Compose** 2.0+
+- **4GB RAM** minimum (8GB+ recommended for production)
+- **10GB** free disk space
 
-### Required Accounts
-- Docker Hub account (for image registry)
-- AWS account (for cloud deployment)
-- Domain name (for production)
-- SSL certificate (for production)
+### Optional (for Local Development mode)
+- **Java 17+** (OpenJDK or Oracle JDK)
+- **Maven 3.8+**
+
+### Installation Commands
+
+**Ubuntu/Debian:**
+```bash
+# Install Docker
+curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker $USER
+
+# Install Docker Compose
+sudo apt-get update
+sudo apt-get install docker-compose-plugin
+
+# Install Java 17
+sudo apt-get install openjdk-17-jdk
+
+# Install Maven
+sudo apt-get install maven
+```
+
+**macOS:**
+```bash
+# Install Docker Desktop
+# Download from: https://www.docker.com/products/docker-desktop
+
+# Install Java 17
+brew install openjdk@17
+
+# Install Maven
+brew install maven
+```
 
 ---
 
-## Local Development
+## Quick Start
 
 ### 1. Clone Repository
+
 ```bash
 git clone https://github.com/yourusername/budget-tracker.git
 cd budget-tracker
 ```
 
-### 2. Set Up Environment
+### 2. Run Deployment Tool
+
 ```bash
-cp .env.example .env
-# Edit .env with your configuration
+./deploy.sh
 ```
 
-### 3. Start Infrastructure
+### 3. Select Deployment Mode
+
+The interactive menu will guide you through the deployment options.
+
+---
+
+## Deployment Modes
+
+### 1. Local Development Mode
+
+**Best for:** Active development with hot reload
+
+**What it does:**
+- Starts infrastructure services in Docker (PostgreSQL, Redis, Kafka, MinIO)
+- Runs Spring Boot locally using Maven
+- Enables automatic code reload on changes
+
+**Command:**
 ```bash
-# Start databases and services
-docker-compose up -d postgres redis kafka zookeeper minio
+./deploy.sh
+# Select option 1
 ```
 
-### 4. Run Backend
+**Features:**
+- ✅ Hot reload with Spring Boot DevTools
+- ✅ Fast iteration cycles
+- ✅ Full debugging support
+- ✅ Direct access to logs
+- ✅ Low resource usage
+
+**Accessing the Application:**
+- Backend API: http://localhost:8080
+- Swagger UI: http://localhost:8080/swagger-ui.html
+- MinIO Console: http://localhost:9001
+
+**Stopping:**
 ```bash
-cd backend
-mvn clean install
-mvn spring-boot:run
+# Stop backend: Ctrl+C
+# Stop infrastructure: docker-compose down
 ```
 
-### 5. Verify Installation
+---
+
+### 2. Local Docker Mode (Full Stack)
+
+**Best for:** Testing complete system, demos, integration testing
+
+**What it does:**
+- Runs everything in Docker containers
+- Uses production-like setup locally
+- Includes all monitoring tools
+
+**Command:**
 ```bash
+./deploy.sh
+# Select option 2
+```
+
+**Features:**
+- ✅ Complete isolated environment
+- ✅ Production-like setup
+- ✅ Easy cleanup
+- ✅ No local Java/Maven needed
+- ✅ Monitoring stack included
+
+**Services Started:**
+- Backend (Spring Boot)
+- PostgreSQL database
+- Redis cache
+- Apache Kafka + Zookeeper
+- MinIO (S3-compatible storage)
+- Prometheus (metrics)
+- Grafana (dashboards)
+- pgAdmin (database management)
+
+**Accessing Services:**
+- Backend API: http://localhost:8080
+- Swagger UI: http://localhost:8080/swagger-ui.html
+- Grafana: http://localhost:3000 (admin/admin)
+- Prometheus: http://localhost:9090
+- MinIO Console: http://localhost:9001
+- pgAdmin: http://localhost:5050
+
+**Viewing Logs:**
+```bash
+# All services
+docker-compose logs -f
+
+# Specific service
+docker-compose logs -f backend
+
+# Or use deployment tool
+./deploy.sh  # Option 5
+```
+
+**Stopping:**
+```bash
+docker-compose down
+```
+
+---
+
+### 3. Production Deployment
+
+**Best for:** Production environments, staging servers
+
+**What it does:**
+- Deploys with production configuration
+- Applies resource limits and security hardening
+- Enables enhanced monitoring and health checks
+- Uses `.env.production` for configuration
+
+**Prerequisites:**
+1. Create `.env.production` from template:
+   ```bash
+   cp .env.production.template .env.production
+   ```
+
+2. Edit `.env.production` and set all required values:
+   - Database credentials
+   - JWT secret (use strong random value!)
+   - API keys (Stripe, FX rates, etc.)
+   - Email configuration
+   - S3/storage credentials
+
+**Command:**
+```bash
+./deploy.sh
+# Select option 3
+```
+
+**Production Features:**
+- ✅ Resource limits (CPU/Memory)
+- ✅ Auto-restart policies
+- ✅ Health checks with proper timeouts
+- ✅ Production JVM settings (optimized heap, GC)
+- ✅ Log rotation and aggregation
+- ✅ Security hardening
+- ✅ Database backups
+- ✅ Metrics and monitoring
+
+**Important Settings:**
+
+**JVM Configuration (Automatic):**
+```bash
+JAVA_OPTS=-Xms1g -Xmx3g -XX:+UseG1GC -XX:MaxGCPauseMillis=200
+```
+
+**Resource Limits:**
+- Backend: 4GB RAM limit, 2GB reservation
+- PostgreSQL: 2GB RAM limit
+- Redis: 512MB RAM limit
+- Kafka: 2GB RAM limit
+
+---
+
+## Production Deployment
+
+### Step-by-Step Production Setup
+
+#### 1. Server Preparation
+
+```bash
+# Update system
+sudo apt-get update && sudo apt-get upgrade -y
+
+# Install Docker
+curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker $USER
+
+# Install Docker Compose
+sudo apt-get install docker-compose-plugin
+
+# Install utilities
+sudo apt-get install git curl wget
+```
+
+#### 2. Clone and Configure
+
+```bash
+# Clone repository
+git clone https://github.com/yourusername/budget-tracker.git
+cd budget-tracker
+
+# Create production environment file
+cp .env.production.template .env.production
+
+# Edit with production values
+nano .env.production
+```
+
+#### 3. Generate Secure Secrets
+
+```bash
+# Generate JWT secret (256-bit minimum)
+openssl rand -base64 64
+
+# Generate Grafana secret
+openssl rand -base64 32
+
+# Update .env.production with generated values
+```
+
+#### 4. Deploy
+
+```bash
+./deploy.sh
+# Select option 3 (Production Deployment)
+```
+
+#### 5. Verify Deployment
+
+```bash
+# Run health checks
+./deploy.sh
+# Select option 4
+
+# Check all services are running
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml ps
+
+# Test API
 curl http://localhost:8080/actuator/health
 ```
 
----
+#### 6. Setup Reverse Proxy (Nginx)
 
-## Docker Deployment
-
-### Full Stack with Docker Compose
-
+**Install Nginx:**
 ```bash
-# Build and start all services
-docker-compose up -d --build
-
-# View logs
-docker-compose logs -f backend
-
-# Check service health
-docker-compose ps
-
-# Access services:
-# - Backend: http://localhost:8080
-# - Swagger: http://localhost:8080/swagger-ui.html
-# - Prometheus: http://localhost:9090
-# - Grafana: http://localhost:3000
-# - pgAdmin: http://localhost:5050
+sudo apt-get install nginx certbot python3-certbot-nginx
 ```
 
-### Production Docker Compose
+**Configure Nginx (`/etc/nginx/sites-available/budget-tracker`):**
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
 
-```bash
-# Use production configuration
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-
-# Scale backend
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --scale backend=3
+    location / {
+        proxy_pass http://localhost:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
 ```
 
----
-
-## Kubernetes Deployment
-
-### 1. Create Namespace
+**Enable and get SSL:**
 ```bash
-kubectl apply -f infra/kubernetes/namespace.yaml
+sudo ln -s /etc/nginx/sites-available/budget-tracker /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl restart nginx
+sudo certbot --nginx -d your-domain.com
 ```
 
-### 2. Create Secrets
-```bash
-# Database password
-kubectl create secret generic postgres-secret \
-  --from-literal=POSTGRES_PASSWORD=your-secure-password \
-  -n budget-tracker
+#### 7. Setup Automated Backups
 
-# Backend secrets
-kubectl create secret generic backend-secret \
-  --from-literal=DB_PASSWORD=your-db-password \
-  --from-literal=REDIS_PASSWORD=your-redis-password \
-  --from-literal=JWT_SECRET=your-jwt-secret \
-  -n budget-tracker
+```bash
+# Setup daily backups (runs at 2 AM)
+./deploy.sh
+# Select option 6, then option 3 (Setup automated backups)
 ```
 
-### 3. Deploy Database
+#### 8. Configure Firewall
+
 ```bash
-kubectl apply -f infra/kubernetes/postgres-deployment.yaml
-```
-
-### 4. Deploy Redis
-```bash
-kubectl apply -f infra/kubernetes/redis-deployment.yaml
-```
-
-### 5. Build and Push Docker Image
-```bash
-# Build image
-cd backend
-docker build -t yourusername/budget-tracker-backend:latest .
-
-# Push to registry
-docker push yourusername/budget-tracker-backend:latest
-```
-
-### 6. Deploy Backend
-```bash
-kubectl apply -f infra/kubernetes/backend-deployment.yaml
-```
-
-### 7. Deploy Ingress
-```bash
-# Install nginx ingress controller first
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.2/deploy/static/provider/cloud/deploy.yaml
-
-# Deploy application ingress
-kubectl apply -f infra/kubernetes/ingress.yaml
-```
-
-### 8. Verify Deployment
-```bash
-# Check pods
-kubectl get pods -n budget-tracker
-
-# Check services
-kubectl get svc -n budget-tracker
-
-# Check ingress
-kubectl get ingress -n budget-tracker
-
-# View logs
-kubectl logs -f deployment/backend -n budget-tracker
+# Allow SSH, HTTP, HTTPS
+sudo ufw allow 22/tcp
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+sudo ufw enable
 ```
 
 ---
 
-## AWS Deployment with Terraform
+## GitHub Codespaces
 
-### 1. Configure AWS CLI
-```bash
-aws configure
-# Enter your AWS Access Key ID
-# Enter your AWS Secret Access Key
-# Enter default region: us-east-1
-```
+Budget Tracker works seamlessly in GitHub Codespaces!
 
-### 2. Initialize Terraform
-```bash
-cd infra/terraform/aws
-terraform init
-```
+### Quick Start
 
-### 3. Create tfvars File
-```bash
-cat > terraform.tfvars << EOF
-aws_region             = "us-east-1"
-environment            = "production"
-db_password            = "your-secure-db-password"
-db_instance_class      = "db.t3.medium"
-redis_node_type        = "cache.t3.medium"
-eks_node_instance_type = "t3.large"
-EOF
-```
+1. **Open in Codespaces:**
+   - Click "Code" → "Create codespace on main"
 
-### 4. Plan Infrastructure
-```bash
-terraform plan
-```
+2. **Run Deployment:**
+   ```bash
+   ./deploy.sh
+   # Select option 1 or 2
+   ```
 
-### 5. Apply Infrastructure
-```bash
-terraform apply
-# Review changes and type 'yes' to proceed
-```
+3. **Access Application:**
+   - Check the "PORTS" tab in VS Code
+   - All ports are automatically forwarded
+   - URLs format: `https://<codespace-name>-<port>.app.github.dev`
 
-### 6. Configure kubectl for EKS
-```bash
-aws eks update-kubeconfig --name budget-tracker-eks --region us-east-1
-```
+### Codespace-Specific Features
 
-### 7. Deploy Application to EKS
-```bash
-# Follow Kubernetes deployment steps above
-kubectl apply -f infra/kubernetes/
-```
+- ✅ Automatic port forwarding
+- ✅ Pre-configured environment
+- ✅ No local setup required
+- ✅ Works from any device
+- ✅ Integrated with VS Code
 
-### 8. Configure DNS
-```bash
-# Get Load Balancer URL
-kubectl get ingress -n budget-tracker
-
-# Create CNAME record in Route53 or your DNS provider
-# api.yourdomain.com -> ALB-URL
-```
+**Example URLs:**
+- API: `https://psychic-invention-xxxx-8080.app.github.dev`
+- Swagger: `https://psychic-invention-xxxx-8080.app.github.dev/swagger-ui.html`
 
 ---
 
-## Environment Variables
+## Environment Configuration
 
-### Required Variables
+### Environment Files
 
-#### Database
+- **`.env.example`** - Template with all available options
+- **`.env.local`** - Local development settings (created automatically)
+- **`.env.production.template`** - Production template
+- **`.env.production`** - Your production settings (NOT in git)
+
+### Key Configuration Variables
+
+**Database:**
 ```bash
 DB_HOST=postgres
 DB_PORT=5432
 DB_NAME=budget_tracker
 DB_USERNAME=postgres
-DB_PASSWORD=your-secure-password
+DB_PASSWORD=<strong-password-here>
 ```
 
-#### Redis
+**JWT (CRITICAL for Security):**
 ```bash
-REDIS_HOST=redis
-REDIS_PORT=6379
-REDIS_PASSWORD=your-redis-password
+# Generate with: openssl rand -base64 64
+JWT_SECRET=<256-bit-random-secret>
+JWT_EXPIRATION=86400000  # 24 hours
 ```
 
-#### JWT
+**CORS:**
 ```bash
-JWT_SECRET=your-256-bit-secret-key-minimum-32-characters
-JWT_EXPIRATION=86400000
-JWT_REFRESH_EXPIRATION=604800000
+CORS_ALLOWED_ORIGINS=https://your-frontend.com,https://app.your-domain.com
 ```
 
-#### S3/Storage
+**Email:**
 ```bash
-S3_ENDPOINT=https://s3.amazonaws.com
-S3_REGION=us-east-1
-S3_ACCESS_KEY=your-access-key
-S3_SECRET_KEY=your-secret-key
-S3_BUCKET_NAME=budget-tracker-attachments
-```
-
-### Optional Variables
-
-#### Kafka
-```bash
-KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-```
-
-#### Features
-```bash
-FEATURE_BANK_INTEGRATION=true
-FEATURE_OCR_RECEIPTS=true
-FEATURE_ML_CATEGORIZATION=true
+MAIL_HOST=smtp.sendgrid.net
+MAIL_PORT=587
+MAIL_USERNAME=apikey
+MAIL_PASSWORD=<your-sendgrid-api-key>
 ```
 
 ---
 
-## Database Migrations
+## Database Management
 
-### Automatic Migrations (Recommended)
-Flyway runs automatically on startup. No manual intervention needed.
+### Backup Database
 
-### Manual Migrations
 ```bash
-cd backend
+# Interactive backup
+./deploy.sh
+# Select option 6
 
-# Run migrations
-mvn flyway:migrate
-
-# Check migration status
-mvn flyway:info
-
-# Rollback (be careful!)
-mvn flyway:clean
+# Or directly
+bash scripts/backup.sh
 ```
 
-### Create New Migration
-```bash
-# Create file: backend/src/main/resources/db/migration/V1_0_X__description.sql
-# Example: V1_0_3__add_payment_methods.sql
+**Backups are stored in:** `./backups/`
 
-CREATE TABLE payment_methods (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES users(id),
-    type VARCHAR(50) NOT NULL,
-    details JSONB,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
+**Automated Backups:**
+```bash
+# Setup cron job for daily backups at 2 AM
+./deploy.sh
+# Option 6 → Option 3
+```
+
+### Restore Database
+
+```bash
+# Interactive restore
+./deploy.sh
+# Select option 7
+
+# Or directly
+bash scripts/restore.sh
+```
+
+**⚠️ Warning:** Restore will drop the existing database!
+
+### Manual Database Operations
+
+```bash
+# Connect to database
+docker exec -it budget-tracker-postgres psql -U postgres -d budget_tracker
+
+# Create manual backup
+docker exec budget-tracker-postgres pg_dump -U postgres budget_tracker > backup.sql
+
+# Restore manual backup
+cat backup.sql | docker exec -i budget-tracker-postgres psql -U postgres budget_tracker
 ```
 
 ---
 
-## Monitoring Setup
+## Monitoring & Logs
 
-### Prometheus
-
-Access: http://your-domain:9090
-
-**Key Metrics to Monitor:**
-- `http_server_requests_seconds_count` - Request count
-- `http_server_requests_seconds_sum` - Request duration
-- `jvm_memory_used_bytes` - Memory usage
-- `hikaricp_connections_active` - Database connections
-- `system_cpu_usage` - CPU usage
-
-### Grafana
-
-Access: http://your-domain:3000
-
-**Setup:**
-1. Login (admin/admin)
-2. Add Prometheus datasource
-3. Import dashboards:
-   - Spring Boot 2.1 Statistics (ID: 10280)
-   - JVM (Micrometer) (ID: 4701)
-   - PostgreSQL Database (ID: 9628)
-
-### Application Logs
+### Health Checks
 
 ```bash
-# Docker
+# Run comprehensive health check
+./deploy.sh
+# Select option 4
+
+# Or directly
+bash scripts/health-check.sh
+```
+
+**Checks:**
+- ✅ PostgreSQL connectivity
+- ✅ Redis connection
+- ✅ Kafka broker status
+- ✅ Backend API health
+- ✅ Resource usage
+- ✅ Port availability
+
+### Viewing Logs
+
+```bash
+# Interactive log viewer
+./deploy.sh
+# Select option 5
+
+# Or directly
+docker-compose logs -f
+
+# Specific service
 docker-compose logs -f backend
 
-# Kubernetes
-kubectl logs -f deployment/backend -n budget-tracker
+# Search logs
+docker-compose logs | grep "ERROR"
 
-# AWS CloudWatch
-aws logs tail /aws/eks/budget-tracker/application --follow
+# Export logs
+bash scripts/logs.sh
+# Select option 10
 ```
 
----
+### Monitoring Stack
 
-## Backup and Recovery
+**Prometheus:**
+- URL: http://localhost:9090
+- Collects metrics from all services
+- 30-day retention in production
 
-### Database Backup
+**Grafana:**
+- URL: http://localhost:3000
+- Default credentials: admin/admin
+- Pre-configured dashboards
+- Visualizes Prometheus metrics
 
-#### Docker
+**Actuator Endpoints:**
 ```bash
-# Backup
-docker exec budget-tracker-postgres pg_dump -U postgres budget_tracker > backup_$(date +%Y%m%d_%H%M%S).sql
+# Health check
+curl http://localhost:8080/actuator/health
 
-# Restore
-docker exec -i budget-tracker-postgres psql -U postgres budget_tracker < backup.sql
-```
+# Metrics
+curl http://localhost:8080/actuator/metrics
 
-#### Kubernetes
-```bash
-# Backup
-kubectl exec -n budget-tracker postgres-0 -- pg_dump -U postgres budget_tracker > backup.sql
-
-# Restore
-kubectl exec -i -n budget-tracker postgres-0 -- psql -U postgres budget_tracker < backup.sql
-```
-
-#### AWS RDS
-Automated backups enabled with 7-day retention.
-
-```bash
-# Manual snapshot
-aws rds create-db-snapshot \
-  --db-instance-identifier budget-tracker-db \
-  --db-snapshot-identifier manual-backup-$(date +%Y%m%d)
-
-# Restore from snapshot
-aws rds restore-db-instance-from-db-snapshot \
-  --db-instance-identifier budget-tracker-db-restored \
-  --db-snapshot-identifier snapshot-name
-```
-
-### Application Data
-
-#### S3 Backup
-```bash
-# Backup attachments
-aws s3 sync s3://budget-tracker-attachments s3://budget-tracker-backups/$(date +%Y%m%d)/
-
-# Restore
-aws s3 sync s3://budget-tracker-backups/20250106/ s3://budget-tracker-attachments/
+# Info
+curl http://localhost:8080/actuator/info
 ```
 
 ---
 
 ## Troubleshooting
 
-### Backend Won't Start
+### Common Issues
 
+**Issue: Port 8080 already in use**
+
+Solution:
+```bash
+# Find process using port
+lsof -i :8080
+
+# Kill process
+kill -9 <PID>
+
+# Or use different port
+./deploy.sh  # Local dev mode auto-detects and uses next available port
+```
+
+**Issue: Services not becoming healthy**
+
+Solution:
 ```bash
 # Check logs
 docker-compose logs backend
 
-# Common issues:
-# 1. Database not ready
-docker-compose ps postgres
-docker exec budget-tracker-postgres pg_isready
+# Verify all services are running
+docker-compose ps
 
-# 2. Port already in use
-sudo lsof -i :8080
-kill -9 <PID>
-
-# 3. Out of memory
-docker stats
-# Increase memory in docker-compose.yml
-```
-
-### Database Connection Issues
-
-```bash
-# Test connection
-docker exec budget-tracker-postgres psql -U postgres -d budget_tracker -c "SELECT 1"
-
-# Check credentials
-docker exec budget-tracker-postgres env | grep POSTGRES
-
-# Reset password
-docker exec -it budget-tracker-postgres psql -U postgres
-ALTER USER postgres WITH PASSWORD 'newpassword';
-```
-
-### Kubernetes Pod Issues
-
-```bash
-# Check pod status
-kubectl get pods -n budget-tracker
-
-# Describe pod
-kubectl describe pod <pod-name> -n budget-tracker
-
-# Check logs
-kubectl logs <pod-name> -n budget-tracker --previous
-
-# Get shell access
-kubectl exec -it <pod-name> -n budget-tracker -- /bin/sh
-```
-
-### Performance Issues
-
-```bash
-# Check resource usage
+# Check resources
 docker stats
 
-# Kubernetes
-kubectl top pods -n budget-tracker
-kubectl top nodes
-
-# Database performance
-docker exec -it budget-tracker-postgres psql -U postgres -d budget_tracker
-SELECT * FROM pg_stat_activity;
+# Restart services
+docker-compose restart
 ```
+
+**Issue: Database connection failed**
+
+Solution:
+```bash
+# Ensure PostgreSQL is healthy
+docker exec budget-tracker-postgres pg_isready -U postgres
+
+# Check credentials in .env file
+cat .env.local | grep DB_
+
+# Restart database
+docker-compose restart postgres
+```
+
+**Issue: Out of memory**
+
+Solution:
+```bash
+# Check Docker memory allocation
+docker system df
+
+# Clean up unused containers/images
+docker system prune -a
+
+# For production, increase server RAM or adjust limits in docker-compose.prod.yml
+```
+
+### Debugging Tips
+
+1. **Enable detailed logging:**
+   ```bash
+   # Edit application-dev.yml
+   logging:
+     level:
+       com.budgettracker: DEBUG
+   ```
+
+2. **Check container logs:**
+   ```bash
+   docker-compose logs --tail=100 -f backend
+   ```
+
+3. **Inspect container:**
+   ```bash
+   docker exec -it budget-tracker-backend /bin/sh
+   ```
+
+4. **Verify network:**
+   ```bash
+   docker network inspect budget-tracker-network
+   ```
 
 ---
 
-## Security Checklist
+## Security Best Practices
+
+### Production Security Checklist
 
 - [ ] Change all default passwords
-- [ ] Use strong JWT secret (min 256 bits)
-- [ ] Enable HTTPS/TLS
-- [ ] Configure firewall rules
-- [ ] Enable database encryption at rest
-- [ ] Set up WAF (AWS WAF)
-- [ ] Enable rate limiting
+- [ ] Generate strong JWT secret (256+ bits)
+- [ ] Use strong database password
+- [ ] Configure CORS properly
+- [ ] Enable HTTPS/SSL with valid certificate
+- [ ] Set up firewall rules
 - [ ] Regular security updates
-- [ ] Rotate secrets regularly
-- [ ] Enable audit logging
-- [ ] Configure backup encryption
-- [ ] Use secrets manager (AWS Secrets Manager)
+- [ ] Enable automated backups
+- [ ] Monitor logs for suspicious activity
+- [ ] Use secrets management (AWS Secrets Manager, Vault)
+- [ ] Regular dependency updates
+- [ ] Implement rate limiting
+- [ ] Set up intrusion detection
+
+### Recommended Security Measures
+
+**1. Environment Variables:**
+- Never commit `.env.production` to Git
+- Use secret management tools
+- Rotate secrets regularly
+
+**2. Network Security:**
+- Use private networks for internal communication
+- Expose only necessary ports
+- Implement firewall rules
+
+**3. Database Security:**
+- Use strong passwords
+- Enable SSL connections
+- Regular backups
+- Limit network access
+
+**4. Application Security:**
+- Keep dependencies updated
+- Regular security scanning
+- Monitor for vulnerabilities
+- Implement proper authentication
+
+**5. SSL/TLS:**
+```bash
+# Use Let's Encrypt for free SSL
+sudo certbot --nginx -d your-domain.com
+```
+
+**6. Monitoring:**
+- Set up alerts for failed logins
+- Monitor resource usage
+- Track API usage patterns
+- Review logs regularly
 
 ---
 
-## Performance Tuning
+## Maintenance
 
-### Database
-```properties
-# application.yml
-spring:
-  datasource:
-    hikari:
-      maximum-pool-size: 50
-      minimum-idle: 10
-      connection-timeout: 30000
-```
+### Regular Maintenance Tasks
 
-### JVM
-```yaml
-# docker-compose.yml or K8s deployment
-JAVA_OPTS: "-Xms1g -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
-```
+**Daily:**
+- Check health status
+- Review error logs
+- Monitor resource usage
 
-### Redis
+**Weekly:**
+- Review security logs
+- Check backup status
+- Update dependencies
+
+**Monthly:**
+- Security updates
+- Database optimization
+- Backup cleanup
+
+### Update Application
+
 ```bash
-# Increase memory
-maxmemory 2gb
-maxmemory-policy allkeys-lru
+# Pull latest changes
+git pull origin main
+
+# Rebuild and deploy
+./deploy.sh
+# Select option 3 (Production)
 ```
 
----
+### Cleanup
 
-## Scaling
-
-### Horizontal Scaling
-
-#### Docker Compose
 ```bash
-docker-compose up -d --scale backend=3
+# Light cleanup (keep data)
+./deploy.sh
+# Select option 9, then option 1
+
+# Full cleanup (remove all data)
+./deploy.sh
+# Select option 9, then option 2
 ```
-
-#### Kubernetes
-```bash
-kubectl scale deployment backend --replicas=5 -n budget-tracker
-```
-
-### Vertical Scaling
-
-Update resource limits in deployment files and restart services.
 
 ---
 
 ## Support
 
-For deployment issues:
-- Check logs first
-- Review this guide
-- Check GitHub Issues
-- Contact DevOps team
+For issues and questions:
+- GitHub Issues: https://github.com/yourusername/budget-tracker/issues
+- Documentation: https://github.com/yourusername/budget-tracker/docs
 
 ---
 
-**Last Updated:** 2025-10-06
+**Built with ❤️ | Deployment made easy with automated scripts**
