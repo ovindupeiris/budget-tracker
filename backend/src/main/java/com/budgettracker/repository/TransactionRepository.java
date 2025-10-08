@@ -219,4 +219,45 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID>,
         @Param("startDate") LocalDate startDate,
         @Param("endDate") LocalDate endDate
     );
+
+    /**
+     * Sum transactions by type and date range
+     */
+    @Query("SELECT COALESCE(SUM(t.amountInWalletCurrency), 0) FROM Transaction t " +
+           "WHERE t.user.id = :userId AND t.type = :type " +
+           "AND t.transactionDate BETWEEN :startDate AND :endDate " +
+           "AND t.status = 'COMPLETED' AND t.deleted = false")
+    BigDecimal sumByUserIdAndTypeAndDateRange(
+        @Param("userId") UUID userId,
+        @Param("type") TransactionType type,
+        @Param("startDate") LocalDate startDate,
+        @Param("endDate") LocalDate endDate
+    );
+
+    /**
+     * Count transactions by date range
+     */
+    long countByUserIdAndTransactionDateBetween(UUID userId, LocalDate startDate, LocalDate endDate);
+
+    /**
+     * Sum by category
+     */
+    @Query("SELECT c.name, COALESCE(SUM(t.amountInWalletCurrency), 0) FROM Transaction t " +
+           "LEFT JOIN t.category c WHERE t.user.id = :userId AND t.type = :type " +
+           "AND t.transactionDate BETWEEN :startDate AND :endDate " +
+           "AND t.status = 'COMPLETED' AND t.deleted = false " +
+           "GROUP BY c.name ORDER BY SUM(t.amountInWalletCurrency) DESC")
+    List<Object[]> sumByCategory(
+        @Param("userId") UUID userId,
+        @Param("type") TransactionType type,
+        @Param("startDate") LocalDate startDate,
+        @Param("endDate") LocalDate endDate
+    );
+
+    /**
+     * Find top N transactions by user
+     */
+    @Query("SELECT t FROM Transaction t WHERE t.user.id = :userId " +
+           "AND t.deleted = false ORDER BY t.transactionDate DESC, t.createdAt DESC LIMIT :limit")
+    List<Transaction> findTopNByUserId(@Param("userId") UUID userId, @Param("limit") int limit);
 }
