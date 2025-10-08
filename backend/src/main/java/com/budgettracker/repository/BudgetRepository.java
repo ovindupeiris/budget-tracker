@@ -82,4 +82,20 @@ public interface BudgetRepository extends JpaRepository<Budget, UUID> {
         @Param("now") LocalDate now,
         @Param("threshold") LocalDate threshold
     );
+
+    /**
+     * Count active budgets
+     */
+    @Query("SELECT COUNT(b) FROM Budget b WHERE b.user.id = :userId " +
+           "AND b.status = 'ACTIVE' AND b.deleted = false")
+    long countActiveBudgets(@Param("userId") UUID userId);
+
+    /**
+     * Count budgets exceeding threshold
+     */
+    @Query("SELECT COUNT(b) FROM Budget b WHERE b.user.id = :userId " +
+           "AND b.status = 'ACTIVE' " +
+           "AND (b.spent / b.amount * 100) >= b.alertThreshold " +
+           "AND b.deleted = false")
+    long countBudgetsExceedingThreshold(@Param("userId") UUID userId);
 }
