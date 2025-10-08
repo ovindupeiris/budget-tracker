@@ -2,7 +2,7 @@
 
 > A comprehensive SaaS personal finance and budget tracking application with multi-currency support, powerful analytics, and intelligent insights.
 
-[![Status](https://img.shields.io/badge/status-in%20development-yellow)]()
+[![Version](https://img.shields.io/badge/version-v1.0-blue)]()
 [![Backend](https://img.shields.io/badge/backend-complete-success)]()
 [![Frontend](https://img.shields.io/badge/frontend-pending-orange)]()
 [![License](https://img.shields.io/badge/license-MIT-blue)]()
@@ -117,7 +117,7 @@ After deployment, access your services:
 **Infrastructure:**
 - MinIO Console: http://localhost:9001 (minioadmin/minioadmin)
 - pgAdmin: http://localhost:5050 (admin@budgettracker.com/admin)
-- Grafana: http://localhost:3000 (admin/admin)
+- Grafana: http://localhost:3001 (admin/admin)
 - Prometheus: http://localhost:9090
 
 **GitHub Codespaces:**
@@ -150,23 +150,23 @@ curl -X POST http://localhost:8080/api/auth/login \
 
 ## 📚 Documentation
 
-### 📊 Project Tracking
+### 📖 Complete Documentation
 
-**Track project progress, roadmap, and sprint planning on Notion:**
-- Import [NOTION.md](NOTION.md) to your Notion workspace for comprehensive project tracking
-- Includes: feature status, sprint planning, timeline, tech debt, and weekly progress
-- **Recommended**: Keep all project management and status tracking in Notion
-
-### 📖 Technical Documentation
-
-Complete technical documentation is available in the [`/docs`](docs/) folder:
+Comprehensive documentation is available in the [`/docs`](docs/) folder:
 
 | Document | Description |
 |----------|-------------|
-| [Quick Start](docs/QUICKSTART.md) | Get started in 5 minutes |
-| [API Reference](docs/API_REFERENCE.md) | Complete API documentation |
-| [API Examples](docs/API_EXAMPLES.md) | Real-world usage examples |
-| [Deployment Guide](docs/DEPLOYMENT.md) | Production deployment instructions |
+| [Quick Start Guide](docs/QUICKSTART.md) | Get up and running in 5 minutes |
+| [API Reference](docs/API_REFERENCE.md) | Complete API documentation with all endpoints |
+| [API Examples](docs/API_EXAMPLES.md) | Real-world usage examples and workflows |
+| [Deployment Guide](docs/DEPLOYMENT.md) | Production deployment, configuration, and troubleshooting |
+
+### 🔍 Interactive API Documentation
+
+For live API testing and exploration, visit Swagger UI after starting the application:
+```
+http://localhost:8080/swagger-ui.html
+```
 
 ---
 
@@ -217,19 +217,18 @@ budget-tracker/
 │   ├── src/main/java/      # Java source code
 │   ├── src/main/resources/ # Configuration & migrations
 │   └── pom.xml             # Maven dependencies
-├── frontend/                # Next.js frontend (planned)
 ├── infra/                   # Infrastructure as code
-│   ├── docker/             # Docker configs
+│   ├── grafana/            # Grafana dashboards
 │   ├── kubernetes/         # K8s manifests
+│   ├── prometheus/         # Prometheus config
 │   └── terraform/          # AWS infrastructure
+├── scripts/                 # Deployment and utility scripts
 ├── docs/                    # Documentation
-│   ├── API_REFERENCE.md    # API documentation
-│   ├── API_EXAMPLES.md     # Usage examples
-│   ├── QUICKSTART.md       # Quick start guide
 │   └── DEPLOYMENT.md       # Deployment instructions
-├── NOTION.md                # Project tracking (export to Notion)
 ├── docker-compose.yml       # Local development
+├── docker-compose.prod.yml  # Production configuration
 ├── deploy.sh               # One-command deployment
+├── Makefile                # Build automation
 └── README.md               # This file
 ```
 
@@ -237,15 +236,20 @@ budget-tracker/
 
 ## 🎯 Roadmap
 
-### ✅ Phase 1: Backend (Complete)
+### ✅ Phase 1: Backend API - v1.0 (Complete)
 - [x] Core API development
 - [x] Database schema & migrations
-- [x] Authentication & authorization
+- [x] Authentication & authorization (JWT)
+- [x] Wallet management
+- [x] Transaction tracking
+- [x] Budget management and alerts
+- [x] Reports and analytics
+- [x] Category management
 - [x] Docker & Kubernetes setup
 - [x] CI/CD pipeline
-- [x] Monitoring & logging
+- [x] Monitoring & logging (Prometheus, Grafana)
 
-### 🔄 Phase 2: Frontend (In Progress)
+### 🔄 Phase 2: Frontend (Planned)
 - [ ] Next.js application setup
 - [ ] Authentication UI
 - [ ] Dashboard & analytics
@@ -253,7 +257,9 @@ budget-tracker/
 - [ ] Budget & goals UI
 - [ ] Settings & profile pages
 
-### 🔮 Phase 3: Advanced Features
+### 🔮 Phase 3: Advanced Features (Future)
+- [ ] Savings goals tracking
+- [ ] Recurring transactions
 - [ ] Bank account integration (Plaid)
 - [ ] OCR receipt scanning
 - [ ] ML transaction categorization
@@ -279,11 +285,14 @@ budget-tracker/
 git clone https://github.com/yourusername/budget-tracker.git
 cd budget-tracker
 
-# Run with Docker Compose
-sudo docker-compose up -d
+# Start development environment (interactive menu)
+./deploy.sh
+
+# Or directly with Docker Compose
+docker-compose up -d
 
 # View logs
-sudo docker-compose logs -f backend
+docker-compose logs -f backend
 
 # Access services
 # API: http://localhost:8080
@@ -296,34 +305,18 @@ sudo docker-compose logs -f backend
 
 ## 📊 API Documentation
 
-### Authentication
+The API provides comprehensive endpoints for managing personal finances:
 
-```bash
-POST /api/auth/register  # Register new user
-POST /api/auth/login     # Login
-POST /api/auth/refresh   # Refresh token
-```
+### Core Endpoints
 
-### Wallets
+- **Authentication** (`/api/auth`) - Register, login, token refresh
+- **Wallets** (`/api/wallets`) - Multi-wallet management
+- **Transactions** (`/api/transactions`) - Income, expenses, transfers
+- **Budgets** (`/api/budgets`) - Budget creation and tracking
+- **Categories** (`/api/categories`) - Custom categories
+- **Reports** (`/api/reports`) - Analytics and insights
 
-```bash
-GET    /api/wallets           # List wallets
-POST   /api/wallets           # Create wallet
-GET    /api/wallets/:id       # Get wallet
-PUT    /api/wallets/:id       # Update wallet
-DELETE /api/wallets/:id       # Delete wallet
-```
-
-### Transactions
-
-```bash
-GET    /api/transactions              # List transactions
-POST   /api/transactions              # Create transaction
-GET    /api/transactions/search       # Search transactions
-GET    /api/transactions/statistics   # Get statistics
-```
-
-**Full API documentation**: [API Reference](docs/API_REFERENCE.md) | [API Examples](docs/API_EXAMPLES.md)
+**Interactive API Documentation**: After starting the application, visit `http://localhost:8080/swagger-ui.html` for complete API documentation with live testing capabilities.
 
 ---
 
