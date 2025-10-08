@@ -192,7 +192,8 @@ public class Transaction extends BaseEntity {
     @Column(name = "external_id", length = 255)
     private String externalId;
 
-    @Column(name = "metadata", columnDefinition = "JSONB")
+    @Column(name = "metadata", columnDefinition = "jsonb")
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
     private String metadata;
 
     // Offline sync

@@ -17,6 +17,7 @@ spring:
       idle-timeout: 600000
       max-lifetime: 1800000
       pool-name: BudgetTrackerHikariPool
+      auto-commit: false
 
   # JPA Configuration
   jpa:
@@ -161,7 +162,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus,loggers,env,configprops
+        include: health,metrics,prometheus
       base-path: /actuator
   endpoint:
     health:
@@ -188,6 +189,8 @@ management:
       enabled: true
     readinessstate:
       enabled: true
+    mail:
+      enabled: false
 
 # Logging Configuration
 logging:
